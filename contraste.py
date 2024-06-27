@@ -8,8 +8,9 @@ def change_contrast(image, contrast_factor):
     # Ajustar el contraste de la imagen
     adjusted_image = contrast_factor * (image - 128) + 128
     
-    # Asegurarse de que los valores se mantienen en el rango [0, 255]
-    adjusted_image = np.clip(adjusted_image, 0, 255)
+    # Asegurarse de que los valores se mantienen en el rango [0, 255] manualmente
+    adjusted_image[adjusted_image > 255] = 255
+    adjusted_image[adjusted_image < 0] = 0
     
     # Convertir la imagen de vuelta a uint8
     return adjusted_image.astype(np.uint8)

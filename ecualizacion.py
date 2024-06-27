@@ -7,20 +7,32 @@ def histogram_equalization(image):
         # Convertir la imagen a escala de grises
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
-    # Calcular el histograma de la imagen
-    histogram, bin_edges = np.histogram(image, bins=256, range=(0, 255))
+    # Calcular el histograma manualmente
+    histogram = np.zeros(256, dtype=int)
+    for value in image.ravel():
+        histogram[value] += 1
     
     # Calcular la función de distribución acumulativa (CDF)
-    cdf = histogram.cumsum()
-    cdf_normalized = cdf * histogram.max() / cdf.max()  # Normalizar el CDF
+    cdf = np.zeros(256, dtype=int)
+    cdf[0] = histogram[0]
+    for i in range(1, 256):
+        cdf[i] = cdf[i - 1] + histogram[i]
     
-    # Ecualizar la imagen usando la CDF
-    cdf_m = np.ma.masked_equal(cdf, 0)  # Mascarar los valores cero del CDF
-    cdf_m = (cdf_m - cdf_m.min()) * 255 / (cdf_m.max() - cdf_m.min())  # Normalizar el CDF enmascarado
-    cdf_final = np.ma.filled(cdf_m, 0).astype('uint8')  # Llenar los valores enmascarados con ceros y convertir a uint8
+    # Encontrar el valor mínimo del CDF que no sea cero
+    cdf_min = np.min(cdf[np.nonzero(cdf)])
+    
+    # Normalizar el CDF manualmente
+    cdf_normalized = np.zeros(256, dtype=int)
+    for i in range(256):
+        cdf_normalized[i] = round((cdf[i] - cdf_min) * 255 / (cdf[-1] - cdf_min))
+        if cdf[i] < cdf_min:
+            cdf_normalized[i] = 0
     
     # Mapear los valores de la imagen original a los valores ecualizados usando el CDF final
-    image_equalized = cdf_final[image]
+    image_equalized = np.zeros_like(image)
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            image_equalized[i, j] = cdf_normalized[image[i, j]]
     
     return image_equalized
 
